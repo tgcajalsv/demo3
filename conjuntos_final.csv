@@ -1,0 +1,9 @@
+,Id_Medio,Medio_x,Oferta Unitaria,Asignacion_Cuadrante_T1,Asignacion_Cuadrante_T2,Asignacion_Cuadrante_T3,Asignacion_Cuadrante_T4,name,Id_Conjunto,Info,Medio_y,id,Identifier
+0,1,RPT,1.0,6,2,1,0,1-RPT,1,"Id_agente: 100000, Cargo: Sargento (SP) |Id_agente: 100028, Cargo: Agente (SP) |Id_agente: 100095, Cargo: Agente (911) |Id_agente: 100097, Cargo: Agente (911) ",RPT,1,1-RPT
+1,3,RPT,1.0,5,5,7,0,3-RPT,4,"Id_agente: 100007, Cargo: Cabo (SP) |Id_agente: 100019, Cargo: Agente (SP) |Id_agente: 100020, Cargo: Agente (SP) |Id_agente: 100031, Cargo: Agente (SP) ",RPT,3,3-RPT
+2,4,RPT,1.0,4,4,4,4,4-RPT,5,"Id_agente: 100026, Cargo: Agente (SP) |Id_agente: 100075, Cargo: Cabo (911) |Id_agente: 100100, Cargo: Agente (911) |Id_agente: 100103, Cargo: Agente (911) ",RPT,4,4-RPT
+3,5,RPT,1.0,1,6,4,2,5-RPT,6,"Id_agente: 100009, Cargo: Cabo (SP) |Id_agente: 100022, Cargo: Agente (SP) |Id_agente: 100091, Cargo: Agente (911) |Id_agente: 100104, Cargo: Agente (911) ",RPT,5,5-RPT
+4,6,RPT,1.0,3,1,3,1,6-RPT,2,"Id_agente: 100030, Cargo: Agente (SP) |Id_agente: 100073, Cargo: Cabo (911) |Id_agente: 100094, Cargo: Agente (911) |Id_agente: 100096, Cargo: Agente (911) ",RPT,6,6-RPT
+5,7,RPT,1.0,7,0,0,5,7-RPT,7,"Id_agente: 100002, Cargo: Sargento (SP) |Id_agente: 100017, Cargo: Agente (SP) |Id_agente: 100021, Cargo: Agente (SP) |Id_agente: 100101, Cargo: Agente (911) ",RPT,7,7-RPT
+6,8,RPT,1.0,4,4,5,3,8-RPT,3,"Id_agente: 100006, Cargo: Cabo (SP) |Id_agente: 100027, Cargo: Agente (SP) |Id_agente: 100032, Cargo: Agente (SP) |Id_agente: 100088, Cargo: Agente (911) ",RPT,8,8-RPT
+7,9,RPT,1.0,2,0,6,0,9-RPT,8,"Id_agente: 100001, Cargo: Sargento (SP) |Id_agente: 100023, Cargo: Agente (SP) |Id_agente: 100087, Cargo: Agente (911) |Id_agente: 100092, Cargo: Agente (911) ",RPT,9,9-RPT
