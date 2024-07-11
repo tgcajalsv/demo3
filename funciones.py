@@ -1,45 +1,41 @@
-"""Funciones para demo de aplicativo de asignación de medios."""
+"""Funciones para app streamlit demo herramienta asignación de recursos según demanda."""
+
+import streamlit as st 
+#from streamlit_folium import st_folium
 import numpy as np
-import pandas as pd
-import geopandas as gpd 
-import matplotlib.pyplot as plt 
+import pandas as pd 
+import folium
+import random
+from shapely.geometry import Point, Polygon
 
-import folium 
-import geopandas as gpd 
-import shapely
-from shapely import Polygon
-import streamlit as st
-
-# Función para asignar recursos a los cuadrantes y actualizar 'Oferta_total'-------------------------------------------------------------------
 # Función para asignar recursos a los cuadrantes y actualizar 'Oferta_total'
-def asignar_recursos(df_necesidades, df_recursos, asignacionC):
+def asignar_recursos(df_necesidades, df_recursos):
+    #df_necesidades = df_necesidades.rename(columns={"Id_Cuadrante":"Cuadrante"})
     # Iterar sobre cada cuadrante
     for index, row in df_necesidades.iterrows():
-        cuadrante = index
+        cuadrante = row['Cuadrante']
         necesidad = row['Necesidad']
-        print(f"\nAsignando recursos para Cuadrante {cuadrante} con necesidad {necesidad}")
+        #print(f"\nAsignando recursos para Cuadrante {cuadrante} con necesidad {necesidad}")
         
-        # Filtrar recursos disponibles donde Medio es 'RPT'
-        recursos_disponibles = df_recursos[(df_recursos[asignacionC] == 0) & (df_recursos['Medio'] == 'RPT')]
-
+        # Encontrar recursos disponibles
+        recursos_disponibles = df_recursos[df_recursos['Asignacion'] == 0]
         
         # Asignar recursos hasta cubrir la necesidad
         while necesidad > 0 and not recursos_disponibles.empty:
-            # Tomar un recurso disponible aleatoriamente
-            recurso_index = recursos_disponibles.sample().index[0]
+            # Tomar el primer recurso disponible
+            recurso_index = recursos_disponibles.index[0]
             oferta_unitaria = recursos_disponibles.loc[recurso_index, 'Oferta Unitaria']
             
             # Asignar el recurso al cuadrante
-            df_recursos.at[recurso_index, asignacionC] = cuadrante
+            df_recursos.at[recurso_index, 'Asignacion'] = cuadrante
             necesidad -= oferta_unitaria
-            print(f"Asignado recurso {recurso_index} con oferta unitaria {oferta_unitaria}")
+            #print(f"Asignado recurso {recurso_index} con oferta unitaria {oferta_unitaria}")
             
             # Actualizar 'Oferta_total' en el DataFrame de necesidades
-            df_necesidades.at[index, 'Oferta_Total'] += oferta_unitaria
+            df_necesidades.at[index, 'Oferta_total'] += oferta_unitaria
             
             # Actualizar recursos disponibles
-            recursos_disponibles = df_recursos[(df_recursos[asignacionC] == 0) & (df_recursos['Medio'] == 'RPT')]
-
+            recursos_disponibles = df_recursos[df_recursos['Asignacion'] == 0]
         
         if necesidad > 0:
             print(f"No se pudo cubrir la necesidad completa para Cuadrante {cuadrante}. Necesidad restante: {necesidad}")
@@ -47,18 +43,30 @@ def asignar_recursos(df_necesidades, df_recursos, asignacionC):
             print(f"Necesidad cubierta para Cuadrante {cuadrante}")
 
     
-    df_necesidades['Diferencia'] = df_necesidades['Oferta_Total'] + df_necesidades['Cuarteles'] - df_necesidades['Necesidad']
-    recursos_disponibles = df_recursos[df_recursos[asignacionC] == 0]
+    df_necesidades['Diferencia'] = df_necesidades['Oferta_total'] + df_necesidades['Cuarteles'] - df_necesidades['Necesidad']
+    recursos_disponibles = df_recursos[df_recursos['Asignacion'] == 0]
 
-    df_necesidades['Diferencia'] = df_necesidades['Oferta_Total'] + df_necesidades['Cuarteles'] - df_necesidades['Necesidad']
+    # Ordenar los cuadrantes según tengan la menor diferencia
+    if not recursos_disponibles.empty:
+    
+        df_necesidades = df_necesidades.sort_values(by='Diferencia')
+
+
+        # Iterar sobre los cuadrantes ordenados inversamente y asignar recursos remanentes
+        for index, row in df_necesidades.iterrows():
+            if not recursos_disponibles.empty:
+                cuadrante = row['Cuadrante']  # Obtener el cuadrante
+                oferta_unitaria = recursos_disponibles.iloc[0]['Oferta Unitaria']  # Obtener la oferta unitaria del primer recurso disponible
+                df_necesidades.at[index, 'Oferta_total'] += oferta_unitaria  # Actualizar oferta total en el DataFrame de necesidades
+                df_recursos.at[recursos_disponibles.index[0], 'Asignacion'] = cuadrante  # Asignar el cuadrante al primer recurso disponible
+                recursos_disponibles = recursos_disponibles.iloc[1:]  # Remover el recurso asignado
+            else:
+                break  # Si no hay recursos disponibles, salir del bucle
+            
+    df_necesidades['Diferencia'] = df_necesidades['Oferta_total'] + df_necesidades['Cuarteles'] - df_necesidades['Necesidad']
     df_necesidades = df_necesidades.sort_values(by='Cuadrante')
             
     return df_recursos, df_necesidades
-#--///////---//----//----///----//-----//////---//-----///////----///----//------
-#--//--------//----//----////---//---//---------//---//------//---////---//------
-#--////------//----//----//-//--//--//----------//---//------//---//-//--//-------
-#--//--------//----//----//--//-//---//---------//----//----//----//--//-//------
-#--//--------///////-----//---////----//////----//-----/////------//---////----
 
 # Función para transformar polígonos
 def transform_polygon(shapely_polygon, name):
@@ -133,7 +141,6 @@ def label_diferencia(cuadrante, df, gdf):
 
     return label  
 
-
 # Coordenadas predefinidas para marcadores de medios en cuadrantes        
 predefined_coords = {
     "SSC-12.01": [
@@ -175,8 +182,8 @@ def get_predefined_point(polygon_id, index):
     else:
         return None  # En caso de no haber suficientes puntos
     
-def create_popup_content(id_conjunto, turno, conjuntos):
-    rows = conjuntos[(conjuntos['Id_Conjunto'] == int(id_conjunto))&(conjuntos["Turno"]==int(turno))]
+def create_popup_content(id_conjunto, conjuntos):
+    rows = conjuntos[conjuntos['Id_Conjunto'] == id_conjunto]
     if rows.empty:
         return "No data available"
     
@@ -187,21 +194,11 @@ def create_popup_content(id_conjunto, turno, conjuntos):
                      f"Número de grupo: {grupo}<br>"
                      f"Número de conjunto: {conjunto}")
     return popup_content
-
-
-#conjuntos = pd.read_excel("conjuntos2.xlsx")
-
+        
 # Función para agregar medios asignados
-def viz_medios(conjuntos, df, id_medio, predefined_coords, polygon_counter, id_conjunto, turno):
-    id_conjunto = int(id_conjunto)
-
+def viz_medios(df, id_medio, predefined_coords, polygon_counter, id_conjunto, turno):
     tipo = df[df["Id_Medio"] == id_medio]["Medio"].values[0]
-    print("Tipo (str): "+str(tipo))
-    print("Id medio (int): "+str(id_medio))
-    print("Id conjunto (int): "+str(id_conjunto))
-    print("Turno: "+str(turno))
-    cuadrante = df[df["Id_Medio"] == id_medio]["Asignacion_Cuadrante_T"+str(turno)].values[0]
-    cuadrante_name = "SSC-12.0"+str(cuadrante)
+    cuadrante = df[df["Id"] == id_medio]["Asignacion_Cuadrante_T"+str(turno)].values[0]
 
     if tipo == "RPT":
         icon = "car"
@@ -211,19 +208,67 @@ def viz_medios(conjuntos, df, id_medio, predefined_coords, polygon_counter, id_c
         color = "blue"
     
     # Agregar un contador de cantidad de marcadores por cuadrante
-    polygon_id = cuadrante
-    #print("polygon_id: "+str(polygon_id)+", type: "+str(type(polygon_id)))
-
-    coord = get_predefined_point(cuadrante_name, polygon_counter[cuadrante_name])
+    polygon_id = cuadrante  
+    coord = get_predefined_point(polygon_id, polygon_counter[polygon_id])
     if coord:
-        polygon_counter[cuadrante_name] += 1
-        popup_content = create_popup_content(id_conjunto, turno, conjuntos)
+        polygon_counter[polygon_id] += 1
+        popup_content = create_popup_content(id_conjunto)
         marcador = folium.Marker(
             location=coord, 
             draggable=True,
-            popup=popup_content,
+            popup=f'ID:',
             icon=folium.Icon(icon=icon, color=color, prefix='fa')
         )
         return marcador
     else:
         return None  # En caso de coordenadas no válidas
+    
+
+
+# Función para generar mapa
+def mapa_medios(gdf,df_asignados, df_cuadrantes):
+    # Definir coordenadas centrales
+    center_lat = gdf.geometry.centroid.y.mean()
+    center_lon = gdf.geometry.centroid.x.mean()
+
+    # Mapa base
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=14,
+    )
+
+    # Agregar capa cuadrantes
+    for x in range(0,len(gdf)):
+        transform_polygon(gdf["geometry"].iloc[x],gdf["CUADRANTE_"].iloc[x]).add_to(m)
+
+    # Agregar diferencia
+    for x in list(gdf["CUADRANTE_"].unique()):
+        label_diferencia(x,df_cuadrantes,gdf).add_to(m)
+
+    # Agregar marcadores de medios asignados según coordenadas predefinidas
+    medios_asignados = df_asignados[df_asignados["Asignacion"] != 0]
+    polygon_counter = {key: 0 for key in predefined_coords.keys()}
+    for x in list(medios_asignados["Id"]):
+        marker = viz_medios(df_asignados, x, predefined_coords, polygon_counter)
+        if marker:
+            marker.add_to(m)
+
+    return m
+
+turno=1
+
+def asignar_conjuntos(df3, jefe, agentes_seleccionados, id_conjunto,medio,asignacion):
+    # Actualizar Id_Conjunto para jefe
+    df3.loc[df3['Id_agente'] == jefe['Id_agente'], 'Id_Conjunto'] = id_conjunto
+    df3.loc[df3['Id_agente'] == jefe['Id_agente'], 'Medio'] = medio
+    df3.loc[df3['Id_agente'] == jefe['Id_agente'], 'Asignacion_Medios'] = asignacion
+    df3.loc[df3['Id_agente'] == jefe['Id_agente'], 'Turno'] = turno
+    
+    # Actualizar Id_Conjunto para los agentes seleccionados
+    for _, agente in agentes_seleccionados.iterrows():
+        df3.loc[df3['Id_agente'] == agente['Id_agente'], 'Id_Conjunto'] = id_conjunto
+        df3.loc[df3['Id_agente'] == agente['Id_agente'], 'Medio'] = medio
+        df3.loc[df3['Id_agente'] == agente['Id_agente'], 'Asignacion_Medios'] = asignacion
+        df3.loc[df3['Id_agente'] == agente['Id_agente'], 'Turno'] = turno
+    
+    return df3
