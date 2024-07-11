@@ -14,13 +14,13 @@ from shapely.geometry import Point, Polygon
 st.set_page_config(page_title="Demo", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
 
 #--------------------------------------------------------------------------------------
-df1 = pd.read_excel(r"C:\Users\tgcaj\OneDrive - Ministerio de Justicia y Seguridad Pública\Documentos\demo 2\cuadrantes.xlsx")
+df1 = pd.read_excel("cuadrantes.xlsx")
 df1["Cuadrante"] = df1["Id_Cuadrante"]
-df2 = pd.read_excel(r"C:\Users\tgcaj\OneDrive - Ministerio de Justicia y Seguridad Pública\Documentos\demo 2\medios.xlsx")
+df2 = pd.read_excel("medios.xlsx")
 df2["name"] = df2["Id_Medio"].astype(str)+'-'+df2["Medio"]
-df3 = pd.read_excel(r"C:\Users\tgcaj\OneDrive - Ministerio de Justicia y Seguridad Pública\Documentos\demo 2\conjuntos2.xlsx")
+df3 = pd.read_excel("conjuntos2.xlsx")
 
-capa = gpd.read_file(r"C:\Users\tgcaj\OneDrive - Ministerio de Justicia y Seguridad Pública\Documentos\demo 2\poniente.geojson")
+capa = gpd.read_file("poniente.geojson")
 capa["Id_Cuadrante"] = [x[-1] for x in capa["CUADRANTE_"]]
 capa["Id_Cuadrante"] = capa["Id_Cuadrante"].astype(int)
 #--------------------------------------------------------------------------------------
@@ -193,4 +193,4 @@ if st.button("Calcular") ==True:
     components.html(map_html, width=1200, height=750)
 
 else:
-    print("Calcular")
+    components.html(turno1.html)
